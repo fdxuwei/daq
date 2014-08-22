@@ -3,7 +3,7 @@
 
 #include <string>
 
-void err_sys(const char *fmt, ...);
+void err_exit(const char *fmt, ...);
 
 int str2int(const std::string & str);
 
