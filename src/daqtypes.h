@@ -4,6 +4,15 @@
 #include <string>
 #include <vector>
 
+typedef int8 char;
+typedef uint8 unsigned char;
+typedef int16 short;
+typedef uint16 unsigned short;
+typedef int32 int;
+typedef uint32 unsigned int;
+typedef int64 long long;
+typedef uint64 unsigned long long;
+
 /* module command types. the master process exchange module command  data with child acq process . */
 enum MODULECMD
 {

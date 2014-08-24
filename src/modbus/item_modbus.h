@@ -3,6 +3,24 @@
 
 #include <string>
 
+enum ITEM_VALUE_TYPE
+{
+    IVT_INTEGER,
+    ITV_FLOAT,
+    ITV_STRING
+};
+
+typedef struct
+{
+	ITEM_VALUE_TYPE ivt_;
+	union
+	{
+		int32 ival;
+		double fval;
+		std::string sval;
+	}val_;
+}
+
 class item_modbus
 {
 	friend class acqer_modbus;
@@ -14,7 +32,8 @@ protected:
 	
 	/* acq method */
 	unsigned char funcode_;
-	unsigned short startbyte_;
+	unsigned short startaddr_;
+	unsigned char sa_offset_;
 	unsigned short bytes_;
 	std::string expr_;
 	/* value  */
