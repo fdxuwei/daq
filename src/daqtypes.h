@@ -4,88 +4,14 @@
 #include <string>
 #include <vector>
 
-typedef int8 char;
-typedef uint8 unsigned char;
-typedef int16 short;
-typedef uint16 unsigned short;
-typedef int32 int;
-typedef uint32 unsigned int;
-typedef int64 long long;
-typedef uint64 unsigned long long;
-
-/* module command types. the master process exchange module command  data with child acq process . */
-enum MODULECMD
-{
-	MCMD_ITEM_VALUE,
-	MCMD_ACTIVE,
-	MCMD_ACQ_RULE
-};
-
-enum DATATYPE
-{
-	DT_INTEGER,
-	DT_FLOAT,
-	DT_STRING
-};
-
-/* item value send to master process */
-struct mc_item_value
-{
-	MODULECMD cmd_;
-	std::string itemid_;
-	std::string value_;
-
-	template<class Archive>
-	void serialize(Archive & ar)	
-	{
-		ar & cmd_;
-		ar & itemid_;
-		ar & value_;
-	}
-};
-
-/* active data to identify dead process. */
-struct mc_active
-{
-	MODULECMD cmd_;
-
-	template<class Archive>
-	void serialize(Archive & ar)	
-	{
-		ar & cmd_;
-	}
-};
-
-struct acq_rule
-{
-	std::string itemid_;
-	std::string max_;
-	std::string min_;
-	int cycle_;
-
-	template<class Archive>
-	void serialize(Archive & ar)	
-	{
-		ar & itemid_;
-		ar & max_;
-		ar & min_;
-		ar & cycle_;
-	}
-}
-
-struct mc_acq_rule
-{
-	MODULECMD cmd_;
-	std::vector<acq_rule> rules_;
-
-	template<class Archive>
-	void serialize(Archive & ar)
-	{
-		ar & rules_;
-	}
-};
-
-
+typedef char int8;
+typedef unsigned char  uint8;
+typedef short int16;
+typedef unsigned short uint16;
+typedef int int32;
+typedef unsigned int uint32;
+typedef long long int64;
+typedef unsigned long long uint64;
 
 #endif
 

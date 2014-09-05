@@ -1,6 +1,15 @@
 #include "acqer_modbus.h"
+#include "comm.h"
 
 using namespace std;
+
+void acqer_modbus::add_item(item *ip)
+{
+	item_modbus *imp = dynamic_cast<item_modbus*>(ip);
+	assert(imp != NULL);
+	acqer::add_item(ip);
+	fc_items_[ip->funcode].push_back(ip);
+}
 
 void acqer_modbus::acq_once()
 {
@@ -17,11 +26,17 @@ void acqer_modbus::acq_once()
 		uint16 rsplen = proto_->GetRspBufSize(req_funcode_, req_count_);
 		char *rspbuf = new char[rsplen];
 		/* io */
-		if(write(reqbuf, reqlen) != reqlen)
+		comm *commp = init_comm();
+		if(NULL == commp)
+		{
+			//
+			return;
+		}
+		if(comm->write(reqbuf, reqlen) != reqlen)
 		{
 			break;
 		}
-		if(read(rspbuf, rsplen) != rsplen)
+		if(comm->read(rspbuf, rsplen) != rsplen)
 		{
 			break;
 		}
@@ -57,15 +72,15 @@ size_t acqer_modbus::make_req(void *buf, uint16 &len)
 	/* split request, as we may not be able to get all the frame once.
 	 onyl little than, not equal, leave at least one byte empty space.*/
 	while(item_end_itr_ != list<item_modbus*>::end()
-			&& ((*item_end_itr_)->startaddr_ + (*item_end_itr_)->bytes_ - req_startaddr_ - frame_data_len_) < MODBUS_MAX_FRAME_DATA_LEN)
-	{}
+			&& ((*item_end_itr_)->startaddr_ - (*item_begin_itr)->startaddr_ + (*item_end_itr_)->count_)*2 < MODBUS_MAX_FRAME_DATA_LEN)
+	{ ++item_end_itr;}
 
 	/* make request*/
-	list<item_modbus*>::const_iterator item_last_itr = item_end_itr_;
+	item_modbus_list::const_iterator item_last_itr = item_end_itr_;
 	item_last_itr--;
 	req_funcode_ = (*item_begin_itr_)->funcode_;
 	req_startaddr_ = (*item_begin_itr_)->startaddr_;
-	req_count_ = (*item_last_itr)->startaddr_ - (*item_begin_itr_)->startaddr_ + (*item_last_itr)->bytes_/2 + (*item_last_itr)->bytes_%2 ;
+	req_count_ = (*item_last_itr)->startaddr_ - (*item_begin_itr_)->startaddr_ + (*item_last_itr)->count_;
 	proto_->PackPollingReq(devaddr_, req_funcode_, req_startaddr_, req_count_, buf, len);
 	return len;
 }

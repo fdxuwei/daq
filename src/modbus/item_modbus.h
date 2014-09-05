@@ -2,45 +2,20 @@
 #define _ITEM_MODBUS_H_
 
 #include <string>
+#include "item.h"
 
-enum ITEM_VALUE_TYPE
-{
-    IVT_INTEGER,
-    ITV_FLOAT,
-    ITV_STRING
-};
-
-typedef struct
-{
-	ITEM_VALUE_TYPE ivt_;
-	union
-	{
-		int32 ival;
-		double fval;
-		std::string sval;
-	}val_;
-}
-
-class item_modbus
+class item_modbus: public item
 {
 	friend class acqer_modbus;
 public:
+	item_modbus(int id, const std::string &name, unsigned cycle, const std::string &expr, bool onlyexpr = true, uint8 funcode = 0, uint16 startaddr = 0, uint8 sa_offset = 0, uint16 count = 0);
 protected:
-	int id_;
-	std::string name_;
-	unsigned cycle_;
 	
 	/* acq method */
-	unsigned char funcode_;
-	unsigned short startaddr_;
-	unsigned char sa_offset_;
-	unsigned short bytes_;
-	std::string expr_;
-	/* value  */
-	variant value_;
-	/* acq status */
-	bool status_;
-
+	uint8 funcode_;
+	uint16 startaddr_;
+	uint8 sa_offset_;
+	uint16 count_;
 };
 
 #endif
