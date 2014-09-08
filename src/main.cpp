@@ -1,4 +1,5 @@
 #include <string>
+#include <stdio.h>
 #include "daqtypes.h"
 #include "Markup.h"
 #include "system.h"
@@ -6,8 +7,11 @@
 #include "dev_pool.h"
 #include "acqer_modbus.h"
 #include "acqer_modbus_serialport.h"
+#include "serialport_pool.h"
 
 using namespace std;
+
+bool run = true;
 
 int main()
 {
@@ -17,7 +21,7 @@ int main()
 	while(cfg.FindElem("device"))
 	{
 		string devid;
-		devid = cfg.GetAttrib("	id");
+		devid = cfg.GetAttrib("id");
 		if(devid.empty())
 			err_exit("device must have an id");
 		// add device
@@ -36,13 +40,20 @@ int main()
 			{
 				acqer_modbus *amp = NULL;
 				string ip;
+				string serialportstr;
+				string devaddrstr;
+				uint8 devaddr;
+				devaddrstr = cfg.GetAttrib("devaddr");
+				if(devaddrstr.empty())
+					err_exit("modbus acqer must have devaddr");
+				devaddr = str2uint(devaddrstr);
 				ip = cfg.GetAttrib("ip");
 				if(!ip.empty())
 				{
 //					acqer_modbus_tcp *amcp = new acqer_modbus_tcp;
 //					acqer_modbus = acqer_modbus_tcp;
 				}
-				else if(cfg.HasAttrib("serialport"))
+				else if(!((serialportstr = cfg.GetAttrib("serialport")).empty()))
 				{
 					uint16 port;
 					uint32 baudrate;
@@ -50,37 +61,39 @@ int main()
 					uint8 stopbits;
 					uint8 flowctl;
 					uint8 parity;
-					port = str2uint(cfg.GetAttrib("serialport"));
+					string stemp;
+					port = str2uint(serialportstr);
 					// baudrate
-					if(cfg.HasAttrib("baudrate"))
-						baudrate = str2uint(cfg.GetAttrib("baudrate"));
-					else
+					stemp = cfg.GetAttrib("baudrate");
+					if(stemp.empty())
 						err_exit("serialport must hav baudrate");
+					baudrate = str2uint(stemp);
 					// databits
-					if(cfg.HasAttrib("databits"))
-						databits = str2uint(cfg.GetAttrib());
-					else
+					stemp = cfg.GetAttrib("databits");
+					if(stemp.empty())
 						err_exit("serialport must have databits");
+					databits = str2uint(stemp);
 					// stopbits
-					if(cfg.HasAttrib("stopbits"))
-						stopbits = str2uint(cfg.GetAttr("stopbits"));
-					else
+					stemp = cfg.GetAttrib("stopbits");
+					if(stemp.empty())
 						err_exit("serialport must have stopbits");
+					stopbits = str2uint(stemp);
 					// flowctl
-					if(cfg.HasAttrib("flowctl"))
-						flowctl = str2uint(cfg.GetAttr("flowctl"));
-					else
+					stemp = cfg.GetAttrib("flowctl");
+					if(stemp.empty())
 						err_exit("serialport must have flowctl");
+					flowctl = str2uint(stemp);
 
 					//create acqer
-					acqer_modbus_serialport *amsp = new acqer_modbus_serialport(port, baudrate, databits, stopbits, flowctl, parity);
-					acqer_modbus = acqer_modbus_serialport;
-					devp->add_acqer(acqer_modbus);
+					acqer_modbus_serialport *amsp = new acqer_modbus_serialport(devaddr, port, baudrate, databits, stopbits, flowctl, parity);
+					amp = amsp;
+					devp->add_acqer(amsp);
+					serialport_pool::instance().add_serialport(port);
 					// items
 					cfg.IntoElem();
 					while(cfg.FindElem("item"))
 					{
-						string itemid;
+						int itemid;
 						string itemname;
 						unsigned int itemcycle;
 						uint8 funcode;
@@ -88,47 +101,57 @@ int main()
 						uint8 count;
 						uint8 offset;
 						string expr;
+						string stemp;
+						string valtypestr;
+						ITEM_VALUE_TYPE ivt;
 						// create item
 						item_modbus *imp = NULL;
-						if(cfg.HasAttrib("id"))
-							itemid = cfg.GetAttrib("id");
-						else
+						stemp = cfg.GetAttrib("id");
+						if(stemp.empty())
 							err_exit("item must have id");
+						itemid = str2int(stemp);
 						/* name */
-						if(cfg.HasAttrib("name"))
-							itemname = cfg.GetAttrib("name");
+						itemname = cfg.GetAttrib("name");
 						/* cycle */
-						if(cfg.HasAttrib("cycle"))
-							itemcycle = str2uint(cfg.GetAttrib("cycle"));
-						else 
+						stemp = cfg.GetAttrib("cycle");
+						if(stemp.empty())
 							err_exit("item must have cycle");
+						itemcycle = str2uint(stemp);
 						/* expression */
-						if(cfg.HasAttrib("expr"))
-							expr = cfg.GetAttrib("expr");
+						expr = cfg.GetAttrib("expr");
+						/* valuetype */
+						valtypestr = cfg.GetAttrib("valtype");
+						if(valtypestr.empty())
+							valtypestr = "integer";
+						if(valtypestr == "float")	
+							ivt = IVT_FLOAT;
+						else if(valtypestr == "string")	
+							ivt = IVT_STRING;
+						else
+							ivt = IVT_INTEGER;
 						/* modbus items */
-						if(cfg.HasAttrib("funcode"))
+						stemp = cfg.GetAttrib("funcode");
+						if(!stemp.empty())
 						{
 							funcode = str2uint(cfg.GetAttrib("funcode"));
 							/* startaddr */
-							if(cfg.HasAttrib("startaddr"))
-								startaddr = str2uint(cfg.GetAttrib("startaddr"));
-							else
+							stemp = cfg.GetAttrib("startaddr");
+							if(stemp.empty())
 								err_exit("modbus item must have startaddr");
+							startaddr = str2uint(stemp);
 							// count
-							if(cfg.HasAttrib("count"))
-								count = str2uint(cfg.GetAttrib("count"));
-							else
+							stemp = cfg.GetAttrib("count");
+							if(stemp.empty())
 								err_exit("modbus item must have count");
+							count = str2uint(stemp);
 							// offset
-							if(cfg.HasAttrib("offset"))
-								offset = str2uint(cfg.GetAttrib("offset"));
-							else 
-								offset = 0;
-							imp = new item_modbus(itemid, itemname, itemcycle, expr, false, funcode, startaddr, offset, count);
+							stemp = cfg.GetAttrib("offset");
+							offset = str2uint(stemp);
+							imp = new item_modbus(itemid, itemname, itemcycle, expr, ivt, false, funcode, startaddr, offset, count);
 						}
 						else
 						{
-							imp = new item_modbus(itemid, itemname, itemcycle, expr);
+							imp = new item_modbus(itemid, itemname, itemcycle, expr, ivt);
 						}
 						// add an item to acqer
 						amp->add_item(imp);
@@ -147,7 +170,16 @@ int main()
 		}
 		cfg.OutOfElem();
 	}
+	// acq loop
 
+	while(run)
+	{
+		dev_pool::instance().acq_once();
+		dev_pool::instance().handle_item();
+		sleep(1);
+	}
+
+	err_exit("exited");
 	return 0;
 }
 

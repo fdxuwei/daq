@@ -4,7 +4,7 @@ using namespace std;
 
 acqer::~acqer()
 {
-	for(item_list:iterator it = items_.begin(); it != items_.end(); ++it)
+	for(item_list::iterator it = items_.begin(); it != items_.end(); ++it)
 	{
 		delete (*it);
 	}

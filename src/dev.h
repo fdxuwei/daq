@@ -10,8 +10,9 @@ class dev
 public:
 	dev(const std::string &name);
 	~dev();
-	void acqer_once();
+	void acq_once();
 	void add_acqer(acqer *ap);
+	void handle_item();
 private:
 	std::string name_;
 	std::vector<acqer*> acqers_;

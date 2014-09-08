@@ -8,7 +8,7 @@ class comm;
 class acqer_modbus_serialport: public acqer_modbus
 {
 public:
-	acqer_modbus_serialport(uint16 port, uint16 baudrate, uint8 databits, uint8 stopbits, uint8 flowctl, uint8 parity);
+	acqer_modbus_serialport(uint8 devaddr, uint16 port, uint16 baudrate, uint8 databits, uint8 stopbits, uint8 flowctl, uint8 parity);
 protected:
 	virtual comm* init_comm();
 private:

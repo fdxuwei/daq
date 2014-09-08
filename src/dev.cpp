@@ -1,4 +1,5 @@
 #include "dev.h"
+#include "item_handler.h"
 
 using namespace std;
 
@@ -21,11 +22,22 @@ void dev::add_acqer(acqer *ap)
 	acqers_.push_back(ap);
 }
 
-void dev::acqer_once()
+void dev::acq_once()
 {
 	for(vector<acqer*>::iterator it = acqers_.begin(); it != acqers_.end(); ++it)
 	{
-		(*it)->acqer_once();
+		(*it)->acq_once();
 	}
 }
 
+void dev::handle_item()
+{
+	for(vector<acqer*>::iterator ita = acqers_.begin(); ita != acqers_.end(); ++ita)
+	{
+		item_list &il = (*ita)->get_itemlist();
+		for(item_list::iterator iti = il.begin(); iti != il.end(); ++iti)
+		{
+			item_handler::instance().handle_item(name_, *iti);
+		}
+	}
+}

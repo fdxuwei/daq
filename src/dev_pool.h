@@ -15,6 +15,7 @@ public:
 	}
 	void add_dev(dev *dp);
 	void acq_once();
+	void handle_item();
 private:
 	dev_pool();
 	std::vector<dev*> devs_;

@@ -4,6 +4,8 @@
 #include <string>
 #include "daqtypes.h"
 
+#define ITEM_MAX_STRING_LEN 50
+
 enum ITEM_VALUE_TYPE
 {
 	IVT_INTEGER,
@@ -11,23 +13,31 @@ enum ITEM_VALUE_TYPE
 	IVT_STRING
 };
 
-typedef struct
+struct itemval_t
 {
 	ITEM_VALUE_TYPE ivt_;
 	union
 	{
 		int32 ival;
 		double fval;
-		std::string sval;
+		char sval[ITEM_MAX_STRING_LEN];
 	}val_;
-}itemval_t;
+
+};
+
+enum ITEM_STATUS
+{
+	IS_OLD,
+	IS_UPDATED,
+	IS_FAILED
+};
 
 class item
 {
 public:
-	item(int id, const std::string &name, unsigned cycle, const std::string &expr);
+	item(int id, const std::string &name, unsigned cycle, const std::string &expr, ITEM_VALUE_TYPE ivt);
 	virtual ~item();
-protected:
+    // member variable	
 	int id_;
 	std::string name_;
 	unsigned cycle_;
@@ -36,7 +46,9 @@ protected:
 	/* value */
 	itemval_t value_;
 	/* acq status */
-	bool status_;
+	ITEM_STATUS status_;
+	/* last acq time */
+	time_t latime_;
 };
 
 #endif

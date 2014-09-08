@@ -3,15 +3,13 @@
 
 #include <string>
 #include "comm.h"
-#include "daq_types.h"
+#include "daqtypes.h"
 
 class comm_serialport : public comm
 {
 public:
-	comm_serialport();
-	virtual ~comm_serialport(void);
 
-	virtual bool setoption(uint32 baudrate, uint8 databits, uint8 parity, uint8 stopbits, uint8 flowctrl) = 0;
+	virtual bool setoption(uint32 baudrate, uint8 databits, uint8 stopbits, uint8 flowctrl, uint8 parity) = 0;
 	virtual bool clear() = 0;
 	virtual bool open() = 0;
 	virtual void close() = 0;

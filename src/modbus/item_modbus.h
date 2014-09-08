@@ -8,8 +8,7 @@ class item_modbus: public item
 {
 	friend class acqer_modbus;
 public:
-	item_modbus(int id, const std::string &name, unsigned cycle, const std::string &expr, bool onlyexpr = true, uint8 funcode = 0, uint16 startaddr = 0, uint8 sa_offset = 0, uint16 count = 0);
-protected:
+	item_modbus(int id, const std::string &name, unsigned cycle, const std::string &expr, ITEM_VALUE_TYPE ivt, bool onlyexpr = true, uint8 funcode = 0, uint16 startaddr = 0, uint8 sa_offset = 0, uint16 count = 0);
 	
 	/* acq method */
 	uint8 funcode_;

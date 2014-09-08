@@ -53,7 +53,7 @@ public:
 							, uint8 funcode
 							, uint16 startaddr
 							, uint16 cnt
-							, uint8* &out
+							, uint8* out
 							, uint16 &outlen);
 	virtual bool ParsePollingRsp(uint8 *in
 							, uint16 inlen
@@ -81,7 +81,7 @@ public:
 							, uint8 funcode
 							, uint16 startaddr
 							, uint16 cnt
-							, uint8* &out
+							, uint8* out
 							, uint16 &outlen);
 
 	virtual bool ParsePollingRsp(uint8 *in

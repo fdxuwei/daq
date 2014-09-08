@@ -3,7 +3,6 @@
 #include <stdio.h> 
 #include <iostream>
 #include <stdlib.h>
-#include "common.h"
 #include <stdlib.h>
 
 #ifdef WIN32
@@ -127,7 +126,7 @@ void CProtoModbusTcp::PackPollingReq(uint8 devaddr
 										, uint8 funcode
 										, uint16 startaddr
 										, uint16 cnt
-										, uint8* &out
+										, uint8* out
 										, uint16 &outlen)
 {
 	static uint16 wNo = 1;
@@ -150,7 +149,7 @@ void CProtoModbusCom::PackPollingReq(uint8 devaddr
 										, uint8 funcode
 										, uint16 startaddr
 										, uint16 cnt
-										, uint8* &out
+										, uint8* out
 										, uint16 &outlen)
 {
 	uint8 *pTemp = out;

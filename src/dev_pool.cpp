@@ -2,6 +2,10 @@
 
 using namespace std;
 
+dev_pool::dev_pool()
+{
+}
+
 dev_pool::~dev_pool()
 {
 	for(vector<dev*>::iterator it = devs_.begin(); it != devs_.end(); ++it)
@@ -23,3 +27,10 @@ void dev_pool::acq_once()
 	}
 }
 
+void dev_pool::handle_item()
+{
+	for(vector<dev*>::iterator it = devs_.begin(); it != devs_.end(); ++it)
+	{
+		(*it)->handle_item();
+	}
+}

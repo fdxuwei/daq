@@ -8,7 +8,7 @@ class comm_serialport_linux : public comm_serialport
 public:
 	comm_serialport_linux(uint16 com);
 	~comm_serialport_linux(void);
-	virtual bool setoption(uint32 baudrate, uint8 databits, uint8 parity, uint8 stopbits, uint8 flowctrl);
+	virtual bool setoption(uint32 baudrate, uint8 databits, uint8 stopbits, uint8 flowctrl, uint8 parity);
 	virtual bool clear();
 	virtual bool open();
 	virtual void close();

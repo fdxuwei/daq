@@ -2,8 +2,12 @@
 #include <sstream>
 #include <iostream>
 #include <map>
+#include <stdio.h>
 #include <termios.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <string.h>
+#include <assert.h>
 
 using namespace std;
 
@@ -13,17 +17,17 @@ comm_serialport_linux::comm_serialport_linux(uint16 com)
 {
 	stringstream ss;
 	ss << "/dev/ttyS" << com-1;
-	portname_ = ss.str();
-
+	name_ = ss.str();
+	timeout_ = 2;
 }
 
 comm_serialport_linux::~comm_serialport_linux(void)
 {
-	Close();
+	close();
 }
 
 
-bool comm_serialport_linux::setoption(uint32 baudrate, uint8 databits, uint8 parity, uint8 stopbits, uint8 flowctl)
+bool comm_serialport_linux::setoption(uint32 baudrate, uint8 databits, uint8 stopbits, uint8 flowctl, uint8 parity) 
 {
 	static map<uint32, uint16> baudmap;
 	static map<uint8, uint8> databitsmap;
@@ -72,28 +76,24 @@ bool comm_serialport_linux::setoption(uint32 baudrate, uint8 databits, uint8 par
 	/* enable the receiver and set local mode .. */
 	tio.c_cflag |= (CLOCAL | CREAD);
 	/* set data bits */
-	tio.c_flag &= ~CSIZE;
-	tio.c_flag |= databitsmap[databits];
+	tio.c_cflag &= ~CSIZE;
+	tio.c_cflag |= databitsmap[databits];
 	/* set parity */
 	switch(parity)
 	{
 		case 0: /* no parity */
 			tio.c_cflag &= ~PARENB;
-			tio.c_cflag &= ~INPCK;
 			break;
 		case 1: /* odd parity */
 			tio.c_cflag |= PARENB;
 			tio.c_cflag |= PARODD;
-			tio.c_cflag |= INPCK;
 			break;
 		case 2: /* even parity */
 			tio.c_cflag |= PARENB;
 			tio.c_cflag &= ~PARODD;
-			tio.c_cflag |= INPCK;
 			break;
 		case 3: /* space parity */
 			tio.c_cflag &= ~PARENB;
-			tio.c_cflag &= ~CSTOPB;
 		default: /* not possible */ 
 			assert(false);
 	}
@@ -119,12 +119,16 @@ bool comm_serialport_linux::setoption(uint32 baudrate, uint8 databits, uint8 par
 			tio.c_cflag |= CRTSCTS;
 			break;
 		case 2: /* soft ctl */
-			tio.c_cflag |= IXON | IXOFF | IXANY;
+			tio.c_iflag |= IXON | IXOFF | IXANY;
 			break;
 		default: /* not possible */
 			assert(false);
 	}
-
+	// raw mode
+	tio.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
+	tio.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+	tio.c_oflag &= ~OPOST;
+	//	
 	tio.c_cc[VTIME] = timeout_*10;
 	tio.c_cc[VMIN] = 0;
 	if(tcsetattr(fd_, TCSANOW, &tio) < 0)
@@ -140,7 +144,7 @@ bool comm_serialport_linux::open()
 	if(!isopen())
 	{
 		close();
-		fd_ = open(portname_.c_str(), O_RDWR);
+		fd_ = ::open(name_.c_str(), O_RDWR);
 		if(fd_ < 0)
 			return false;
 		isopen_ = true;
@@ -152,7 +156,7 @@ void comm_serialport_linux::close()
 {
 	if(fd_ > 0)
 	{
-		close(fd_);
+		::close(fd_);
 		fd_ = -1;
 	}
 	isopen_ = false;
@@ -165,7 +169,7 @@ size_t comm_serialport_linux::write(const void *data, size_t size)
 	size_t wsize = 0;
 	while(wsize < size)
 	{
-		if((once_len = write(fd_, (char*)data+wsize, size-wsize)) < 0)
+		if((once_len = ::write(fd_, (char*)data+wsize, size-wsize)) < 0)
 		{
 			break;
 		}
@@ -184,7 +188,7 @@ size_t comm_serialport_linux::read(void *data, size_t size)
 	size_t rsize = 0;
 	while(rsize < size)
 	{
-		if((once_len = read(fd_, (char*)data+rsize, size-rsize)) < 0)
+		if((once_len = ::read(fd_, (char*)data+rsize, size-rsize)) < 0)
 		{
 			break;;
 		}

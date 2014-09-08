@@ -39,7 +39,7 @@ comm_serialport* serialport_pool::get_serialport(uint16 port)
 	if(it == port_sp_.end())
 		return NULL;
 	else
-		return *(it->second);
+		return (it->second);
 }
 
 

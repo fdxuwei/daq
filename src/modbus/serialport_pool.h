@@ -3,6 +3,7 @@
 
 #include <map>
 #include <list>
+#include "daqtypes.h"
 
 class comm_serialport;
 
@@ -18,7 +19,7 @@ public:
 	comm_serialport* get_serialport(uint16 port);
 	~serialport_pool();
 private:	
-	seralport_pool();
+	serialport_pool();
 	std::list<comm_serialport*> sps_; // all SerialPort
 	std::map<uint16, comm_serialport*> port_sp_; // port - SerialPort* map
 };
