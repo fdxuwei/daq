@@ -11,7 +11,6 @@ using namespace std;
 acqer_modbus::acqer_modbus(uint8 devaddr)
 	: protomod_ (NULL)
 	, devaddr_ (devaddr) 
-	, acqtime_ (0x7fffffff)
 {
 }
 
@@ -26,10 +25,11 @@ void acqer_modbus::add_item(item *ip)
 	item_modbus *imp = dynamic_cast<item_modbus*>(ip);
 	assert(imp != NULL);
 	acqer::add_item(ip);
-	fc_items_[imp->funcode_].push_back(imp);
+	if(!imp->onlyexpr_)
+		fc_items_[imp->funcode_].push_back(imp);
 }
 
-void acqer_modbus::acq_once()
+void acqer_modbus::simple_acq()
 {
 	uint8 reqbuf[MODBUS_MAX_REQUEST_LEN];
 	uint16 reqlen = sizeof(reqbuf);
@@ -39,8 +39,10 @@ void acqer_modbus::acq_once()
 	for(item_list::iterator it = items_.begin(); it != items_.end(); ++it)
 	{
 		/* is the acq time */
-		if((*it)->latime_ + (*it)->cycle_ <= acqtime_)
+		if(is_acqtime(*it))
+		{	
 			(*it)->status_ = IS_FAILED;
+		}
 	}
 	/* begin acq */
 	fc_item_itr_ = fc_items_.begin();
@@ -48,13 +50,13 @@ void acqer_modbus::acq_once()
 	while(make_req(reqbuf, reqlen) > 0)
 	{
 		uint16 rsplen = protomod_->GetRspBufSize(req_funcode_, req_count_);
-		uint8 *rspbuf = new uint8[rsplen];
+		uint8 rspbuf[MODBUS_MAX_RESPONSE_LEN];
 		/* io */
 		comm *commp = init_comm();
 		if(NULL == commp)
 		{
 			//
-			return;
+			break;
 		}
 		if(commp->write(reqbuf, reqlen) != reqlen)
 		{
@@ -72,6 +74,7 @@ void acqer_modbus::acq_once()
 		if(!protomod_->ParsePollingRsp(rspbuf, rsplen, devaddr, funcode, pout, outlen))
 		{
 			/* checksum err */
+			break;
 		}
 		memcpy(frame_data_, pout, outlen);
 		frame_data_len_ = outlen;
@@ -79,7 +82,6 @@ void acqer_modbus::acq_once()
 		/* make item values */
 		make_item_values();
 
-		delete []rspbuf;
 	}
 }
 
@@ -92,14 +94,20 @@ size_t acqer_modbus::make_req(void *buf, uint16 &len)
 		else
 			return 0; /* cycle request completed */
 	}
+	// skip non acqtimt, and only-expression items
+	while((item_end_itr_ != fc_item_itr_->second.end())	&& ((!is_acqtime(*item_end_itr_)) || ((*item_end_itr_)->onlyexpr_)))
+	{
+		++item_end_itr_;
+	}
+	//
 	item_begin_itr_ = item_end_itr_;
 	/* split request, as we may not be able to get all the frame once.
 	 onyl little than, not equal, leave at least one byte empty space.*/
 	while(item_end_itr_ != fc_item_itr_->second.end())
 	{
 		item_modbus* endi = *item_end_itr_;
-		/* is not the acq time */
-		if(endi->latime_+endi->cycle_ > acqtime_)
+		/* is not the acq time, or only expression items */
+		if((!is_acqtime(endi)) || (endi->onlyexpr_))
 		{
 			++item_end_itr_;
 			continue;
@@ -108,6 +116,9 @@ size_t acqer_modbus::make_req(void *buf, uint16 &len)
 			break;
 		 ++item_end_itr_;
 	}
+	// no item to acq
+	if(item_begin_itr_ == fc_item_itr_->second.end())
+		return 0;
 	/* make request*/
 	item_modbus_list::const_iterator item_last_itr = item_end_itr_;
 	item_last_itr--;
@@ -123,8 +134,8 @@ void acqer_modbus::make_item_values()
 	while(item_begin_itr_ != item_end_itr_)
 	{
 		item_modbus *pim = *item_begin_itr_;
-		/* it is not the acq time*/
-		if(pim->latime_ + pim->cycle_ > acqtime_)
+		/* it is not the acq time, or only expression items*/
+		if((!is_acqtime(pim)) || (pim->onlyexpr_))
 		{
 			++item_begin_itr_;
 			continue;
@@ -162,7 +173,6 @@ void acqer_modbus::make_item_values()
 			default: /* it's not possible */
 				assert(false);
 		}
-		pim->latime_ = acqtime_;
 		pim->status_ = IS_UPDATED;
 		++item_begin_itr_;
 	}

@@ -155,8 +155,12 @@ int main()
 						}
 						// add an item to acqer
 						amp->add_item(imp);
-					}
+					} // cfg.Find("item")
 					cfg.OutOfElem();
+
+					//test expression configuration
+					if(!amp->calc_items())
+						err_exit("wrong expression config");
 				}
 				else
 				{
@@ -171,7 +175,6 @@ int main()
 		cfg.OutOfElem();
 	}
 	// acq loop
-
 	while(run)
 	{
 		dev_pool::instance().acq_once();

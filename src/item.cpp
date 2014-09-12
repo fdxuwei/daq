@@ -9,6 +9,7 @@ item::item(int id, const string &name, unsigned cycle, const string &expr, ITEM_
 	, onlyexpr_ (true)
 	, expr_ (expr)
 	, status_ (IS_OLD) 
+	, latime_(0)  
 {
 	value_.ivt_ = ivt;
 }

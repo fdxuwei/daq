@@ -10,12 +10,11 @@ item_handler::item_handler()
 
 void item_handler::handle_item(const string &devid, item *ip)
 {
-	if(ip->status_ == IS_OLD)
-		return;
 	cout << time(NULL) << ":" << devid << ":"<< ip->name_ << ":";
 	if(ip->status_ == IS_FAILED)
 	{
 		cout << "false" << endl;
+		ip->status_ = IS_OLD;
 		return;
 	}
 	itemval_t *ivp = &(ip->value_);

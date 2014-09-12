@@ -5,6 +5,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <sstream>
+
+using namespace std;
 
 void err_exit(const char * fmt, ...)
 {
@@ -33,3 +36,13 @@ unsigned int str2uint(const std::string & str)
 	else
 		return strtoul(str.c_str(), NULL, 10);
 }
+
+/*
+template<class T>
+string tostr(T val)
+{
+	stringstream ss;
+	ss << val;
+	return ss.str();
+}
+*/

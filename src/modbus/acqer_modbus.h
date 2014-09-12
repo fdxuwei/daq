@@ -11,6 +11,7 @@
 
 #define MODBUS_MAX_FRAME_DATA_LEN 256
 #define MODBUS_MAX_REQUEST_LEN 20
+#define MODBUS_MAX_RESPONSE_LEN (MODBUS_MAX_FRAME_DATA_LEN+20)
 
 class comm;
 
@@ -19,13 +20,14 @@ class acqer_modbus: public acqer
 public:
 	acqer_modbus(uint8 devaddr);
 	~acqer_modbus();
-	virtual void acq_once();
 	virtual void add_item(item *ip);
 protected:
+	virtual void simple_acq();
 	virtual comm* init_comm() = 0;
 	/* modbus protocol */
 	CProtoModbus *protomod_;
 private:
+	bool should_acq(item_modbus *imp);
 	typedef std::list<item_modbus*> item_modbus_list;
 	typedef std::map<unsigned char, item_modbus_list> fc_item_map;
 	/* every cycle of  acquisition may cost several requests.
@@ -47,8 +49,6 @@ private:
 	/* fc_items_, mapped by funcode_, 
 	   and each map list is ordered by startbyte_ */
 	fc_item_map fc_items_;
-	/**/
-	time_t acqtime_;
 };
 
 #endif

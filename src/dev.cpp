@@ -37,7 +37,9 @@ void dev::handle_item()
 		item_list &il = (*ita)->get_itemlist();
 		for(item_list::iterator iti = il.begin(); iti != il.end(); ++iti)
 		{
-			item_handler::instance().handle_item(name_, *iti);
+			item* ip = *iti;
+			if(!ip->name_.empty() && (ip->status_ != IS_OLD))
+				item_handler::instance().handle_item(name_, ip);
 		}
 	}
 }
